@@ -1,0 +1,82 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+dart_code_metrics:
+  metrics-exclude:
+    - test/**
+    - "**/*.router.dart"
+    - "**/*.gen.dart"
+    - "**/*.locator.dart"
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "**/*.logger.dart"
+    - "**/*.form.dart"
+    - "**/*.mocks.dart"
+    - "**/*.g.dart"
+    - "**/firebase_options*.dart"
+  rules:
+    - no-boolean-literal-compare
+    - prefer-trailing-comma
+    - no-equal-then-else
+    - always-remove-listener:
+        severity: warning
+    - avoid-returning-widgets
+    - prefer-const-border-radius:
+        severity: warning
+    - prefer-correct-edge-insets-constructor:
+        severity: warning
+    - avoid-collection-methods-with-unrelated-types
+    - avoid-duplicate-exports
+    - avoid-global-state
+    - avoid-missing-enum-constant-in-map
+    - avoid-redundant-async
+    - avoid-unnecessary-type-casts:
+        severity: warning
+    - avoid-unrelated-type-assertions
+    - avoid-unused-parameters:
+        severity: warning
+    - binary-expression-operand-order
+    - double-literal-format
+    - prefer-immediate-return:
+        severity: warning
+    - prefer-iterable-of:
+        severity: warning
+    - prefer-last:
+        severity: warning
+
+analyzer:
+  plugins:
+    - dart_code_metrics
+  errors:
+    missing_required_param: error
+    missing_return: error
+    invalid_annotation_target: ignore
+    must_be_immutable: error
+    parameter_assignments: error
+    sort_pub_dependencies: ignore
+    sort_unnamed_constructors_first: warning
+    avoid_renaming_method_parameters: warning
+    unnecessary_getters_setters: ignore
+    directives_ordering: ignore
+    todo: ignore
+    library_private_types_in_public_api: ignore
+    no_leading_underscores_for_local_identifiers: ignore
+    public_member_api_docs: ignore
+    omit_local_variable_types: ignore
+    lines_longer_than_80_chars: ignore
+    unawaited_futures: warning
+    unnecessary_lambdas: warning
+    avoid_equals_and_hash_code_on_mutable_classes: warning
+    avoid_positional_boolean_parameters: ignore
+    use_setters_to_change_properties: ignore
+    prefer_constructors_over_static_methods: warning
+
+  exclude:
+    - "**/*.router.dart"
+    - "**/*.gen.dart"
+    - "**/*.locator.dart"
+    - "**/*.freezed.dart"
+    - "**/*.config.dart"
+    - "**/*.logger.dart"
+    - "**/*.form.dart"
+    - "**/*.mocks.dart"
+    - "**/*.g.dart"
