@@ -12,6 +12,8 @@ import 'package:lecle_yoyo_player/src/utils/utils.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+typedef FormatResolverCallback = YoyoVideoFormat Function(Uri uri);
+
 class YoYoPlayer extends StatefulWidget {
   const YoYoPlayer({
     required this.url,
@@ -30,7 +32,7 @@ class YoYoPlayer extends StatefulWidget {
   final void Function(VideoPlayerController controller)? onVideoInitCompleted;
   final bool autoPlayVideoAfterInit;
   final bool allowCacheFile;
-  final VideoFormat Function(Uri uri)? formatResolver;
+  final FormatResolverCallback? formatResolver;
 
   @override
   State<YoYoPlayer> createState() => _YoYoPlayerState();
@@ -88,7 +90,7 @@ class _YoYoPlayerState extends State<YoYoPlayer>
 
   void _handleNetworkVideo(Uri uri, String url) {
     final playType = switch (widget.formatResolver) {
-      final YoyoVideoFormat Function(Uri url) resolver => resolver(uri),
+      final FormatResolverCallback resolver => resolver(uri),
       _ => switch (uri.pathSegments.last) {
           final val when val.endsWith('mkv') => YoyoVideoFormat.mkv,
           final val when val.endsWith('mp4') => YoyoVideoFormat.mp4,
