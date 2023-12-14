@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screen_wake/flutter_screen_wake.dart';
 import 'package:http/http.dart' as http;
+import 'package:lecle_yoyo_player/src/enums/video_format.dart';
 import 'package:lecle_yoyo_player/src/model/models.dart';
 import 'package:lecle_yoyo_player/src/responses/regex_response.dart';
 import 'package:lecle_yoyo_player/src/utils/utils.dart';
@@ -19,6 +20,7 @@ class YoYoPlayer extends StatefulWidget {
     this.aspectRatio = 9 / 16,
     this.autoPlayVideoAfterInit = true,
     this.allowCacheFile = false,
+    this.formatResolver,
     this.onVideoInitCompleted,
   });
 
@@ -28,6 +30,7 @@ class YoYoPlayer extends StatefulWidget {
   final void Function(VideoPlayerController controller)? onVideoInitCompleted;
   final bool autoPlayVideoAfterInit;
   final bool allowCacheFile;
+  final VideoFormat Function(Uri uri)? formatResolver;
 
   @override
   State<YoYoPlayer> createState() => _YoYoPlayerState();
@@ -35,7 +38,7 @@ class YoYoPlayer extends StatefulWidget {
 
 class _YoYoPlayerState extends State<YoYoPlayer>
     with SingleTickerProviderStateMixin {
-  String? playType;
+  YoyoVideoFormat playType = YoyoVideoFormat.other;
   late VideoPlayerController controller;
   List<M3U8Data> yoyo = [];
   List<AudioModel> audioList = [];
@@ -84,19 +87,23 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void _handleNetworkVideo(Uri uri, String url) {
-    final playType = switch (uri.pathSegments.last) {
-      final val when val.endsWith('mkv') => 'MKV',
-      final val when val.endsWith('mp4') => 'MP4',
-      final val when val.endsWith('webm') => 'WEBM',
-      final val when val.endsWith('m3u8') => 'HLS',
-      _ => null,
+    final playType = switch (widget.formatResolver) {
+      final YoyoVideoFormat Function(Uri url) resolver => resolver(uri),
+      _ => switch (uri.pathSegments.last) {
+          final val when val.endsWith('mkv') => YoyoVideoFormat.mkv,
+          final val when val.endsWith('mp4') => YoyoVideoFormat.mp4,
+          final val when val.endsWith('webm') => YoyoVideoFormat.webm,
+          final val when val.endsWith('m3u8') => YoyoVideoFormat.m3u8,
+          _ => YoyoVideoFormat.other
+        },
     };
+
     setStateIfMounted(() => this.playType = playType);
     return switch (playType) {
-      'MKV' => _handleMKV(url),
-      'MP4' => _handleMP4(url),
-      'WEBM' => _handleWEBM(url),
-      'HLS' => _handleHLS(url),
+      YoyoVideoFormat.mkv => _handleMKV(url),
+      YoyoVideoFormat.mp4 => _handleMP4(url),
+      YoyoVideoFormat.webm => _handleWEBM(url),
+      YoyoVideoFormat.m3u8 => _handleHLS(url),
       _ => _handleFallback(url),
     };
   }
@@ -214,10 +221,11 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   }
 
   void videoControlSetup(String url) {
-    videoInit(url);
-    controller.addListener(listener);
-    if (widget.autoPlayVideoAfterInit) controller.play();
-    widget.onVideoInitCompleted?.call(controller);
+    videoInit(url).then((value) {
+      controller.addListener(listener);
+      if (widget.autoPlayVideoAfterInit) controller.play();
+      widget.onVideoInitCompleted?.call(controller);
+    });
   }
 
   Future<void> listener() async {
@@ -235,11 +243,15 @@ class _YoYoPlayerState extends State<YoYoPlayer>
     return setStateIfMounted();
   }
 
-  Future<void> videoInit(String? url) async {
+  Future<void> videoInit(String? url) {
     if (isOffline ?? false) return _intiFallback(url);
-    if (playType == 'MP4' || playType == 'WEBM') return _initOther(url);
-    if (playType == 'MKV') return _initMKV(url);
-    if (playType == 'HLS') return _initHLS(url);
+    return switch (playType) {
+      YoyoVideoFormat.mkv => _initMKV(url),
+      YoyoVideoFormat.mp4 => _initOther(url),
+      YoyoVideoFormat.webm => _initOther(url),
+      YoyoVideoFormat.m3u8 => _initHLS(url),
+      _ => _intiFallback(url),
+    };
   }
 
   Future<void> _intiFallback(String? url) async {
