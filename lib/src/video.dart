@@ -13,6 +13,7 @@ import 'package:video_player/video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 typedef FormatResolverCallback = YoyoVideoFormat Function(Uri uri);
+typedef VideoPlayerBuilder = Widget Function(VideoPlayerController controller);
 
 class YoYoPlayer extends StatefulWidget {
   const YoYoPlayer({
@@ -24,6 +25,7 @@ class YoYoPlayer extends StatefulWidget {
     this.allowCacheFile = false,
     this.formatResolver,
     this.onVideoInitCompleted,
+    this.builder,
   });
 
   final String url;
@@ -33,6 +35,7 @@ class YoYoPlayer extends StatefulWidget {
   final bool autoPlayVideoAfterInit;
   final bool allowCacheFile;
   final FormatResolverCallback? formatResolver;
+  final VideoPlayerBuilder? builder;
 
   @override
   State<YoYoPlayer> createState() => _YoYoPlayerState();
@@ -67,12 +70,13 @@ class _YoYoPlayerState extends State<YoYoPlayer>
   Widget build(BuildContext context) => AspectRatio(
         aspectRatio: widget.aspectRatio,
         child: switch (controller.value.isInitialized) {
-          true => Center(
-              child: AspectRatio(
-                aspectRatio: controller.value.aspectRatio,
-                child: VideoPlayer(controller),
+          true => widget.builder?.call(controller) ??
+              Center(
+                child: AspectRatio(
+                  aspectRatio: controller.value.aspectRatio,
+                  child: VideoPlayer(controller),
+                ),
               ),
-            ),
           false => widget.loading
         },
       );
